@@ -15,6 +15,11 @@ cardapio/
   - `/api/admin/*` exige o token do dono.
   - `/api/public/*` é usado pela loja sem login.
 - **Configurações em tempo real:** a loja lê `/api/public/store` a cada acesso. Qualquer mudança feita no painel vale na hora, sem deploy.
+- **Pedidos em tempo real:** usam *Server-Sent Events* (SSE).
+  - `/api/admin-stream/orders` avisa o painel de pedidos novos e mudanças.
+  - `/api/public/orders/:token/stream` avisa a tela de acompanhamento do cliente.
+  - Hoje funciona com um servidor da API. Com mais de um, os avisos precisam passar por Redis.
+- **Loja do cliente:** usa Vuetify, como o painel, com um tema próprio cuja cor vem das Configurações.
 - **Fotos:** ficam em `api/uploads` e são servidas em `/uploads/...`.
 
 ## Modelo de dados
@@ -69,6 +74,32 @@ O status é calculado pela chave aberta/fechada, pela pausa temporária e pelos 
 - Sem horários cadastrados, vale só a chave aberta/fechada.
 - Com a loja fechada, a loja do cliente mostra o próximo horário de abertura.
 
-### Baixa no estoque (próxima etapa)
+### Pedido
 
-Quando um pedido é confirmado, o sistema gera movimentos `ORDER` pela ficha técnica, em uma única transação. O campo `Order.stockDeducted` evita baixar o estoque duas vezes.
+- **Preço:** o servidor recalcula tudo pelo cardápio (produto, variação, adicionais, preço promocional). O valor enviado pelo navegador é ignorado.
+- **Validações na hora de pedir:**
+  - checkout ligado;
+  - loja aberta, ou encomenda dentro da antecedência mínima e do limite por dia;
+  - retirada ou entrega ligadas;
+  - bairro atendido;
+  - mínimo e máximo de adicionais;
+  - pedido mínimo;
+  - forma de pagamento ativa;
+  - com o controle de estoque ligado, ingrediente suficiente para a quantidade pedida.
+- **Status:**
+
+  ```
+  Recebido → Em preparo → Saiu para entrega / Pronto para retirar → Entregue
+  (qualquer um antes de Entregue) → Cancelado
+  ```
+
+- **Baixa no estoque:** acontece quando o dono aceita o pedido (Recebido → Em preparo). O sistema gera movimentos `ORDER` pela ficha técnica, numa transação com a linha do pedido travada. Assim, dois cliques não baixam duas vezes.
+- **Cancelamento:** se o estoque já tinha baixado, o cancelamento devolve **exatamente** o que foi baixado, mesmo que a receita tenha mudado depois.
+
+### Pix
+
+O código "copia e cola" segue o padrão EMV do Banco Central (BR Code estático):
+- traz a chave da loja, o valor do pedido e o identificador `PEDIDO<número>`;
+- termina com o CRC16 exigido pelo padrão.
+
+O teste usa o exemplo oficial do manual do Banco Central.

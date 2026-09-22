@@ -24,6 +24,15 @@ const vuetify = createVuetify({
           surface: '#FFFFFF',
         },
       },
+      // Tema da loja do cliente: a cor principal vem das Configurações
+      loja: {
+        dark: false,
+        colors: {
+          primary: '#E85D75',
+          background: '#F4F1EF',
+          surface: '#FFFFFF',
+        },
+      },
     },
   },
   defaults: {

@@ -16,6 +16,10 @@ import { stockRoutes } from './routes/stock.js'
 import { recipeRoutes } from './routes/recipes.js'
 import { settingsRoutes } from './routes/settings.js'
 import { publicRoutes } from './routes/public.js'
+import { orderRoutes } from './routes/orders.js'
+import { adminStreamRoutes } from './routes/stream.js'
+import { deliveryZoneRoutes } from './routes/deliveryZones.js'
+import { dashboardRoutes } from './routes/dashboard.js'
 
 import { UPLOAD_DIR } from './lib/uploads.js'
 
@@ -52,6 +56,7 @@ export async function buildApp() {
 
   await app.register(authRoutes, { prefix: '/api/auth' })
   await app.register(publicRoutes, { prefix: '/api/public' })
+  await app.register(adminStreamRoutes, { prefix: '/api/admin-stream' })
 
   // Tudo em /api/admin exige login do dono
   await app.register(
@@ -69,6 +74,9 @@ export async function buildApp() {
       await admin.register(stockRoutes, { prefix: '/stock' })
       await admin.register(recipeRoutes, { prefix: '/recipes' })
       await admin.register(settingsRoutes, { prefix: '/settings' })
+      await admin.register(orderRoutes, { prefix: '/orders' })
+      await admin.register(deliveryZoneRoutes, { prefix: '/delivery-zones' })
+      await admin.register(dashboardRoutes, { prefix: '/dashboard' })
     },
     { prefix: '/api/admin' },
   )

@@ -11,15 +11,17 @@ A arquitetura e o modelo de dados estão em [`docs/arquitetura.md`](docs/arquite
 
 | Módulo | Situação |
 |---|---|
-| Modelo de dados (todas as áreas) | ✅ pronto |
-| Login do dono | ✅ pronto |
+| Modelo de dados e login do dono | ✅ pronto |
 | Cardápio (categorias, produtos, variações, adicionais, fotos, arrastar e soltar) | ✅ pronto |
-| Estoque (itens, compras, ajustes, histórico, alerta de reposição) | ✅ pronto |
+| Estoque (compras, ajustes, histórico, alerta de reposição) | ✅ pronto |
 | Ficha técnica e precificação | ✅ pronto |
-| Configurações — pagamentos (Pix e Mercado Pago) e controle de estoque | ✅ pronto |
-| Dashboard | 🟡 só alertas de estoque e margem (vendas vêm com Pedidos) |
-| Pedidos, baixa no estoque, checkout, pagamento com cartão | ⏳ próxima etapa |
-| Loja do cliente completa | ⏳ hoje é só uma prévia do cardápio |
+| Pedidos em tempo real (quadro, alerta sonoro, mudança de status, baixa no estoque) | ✅ pronto |
+| Dashboard (vendas do dia, semana e mês, ticket médio, mais vendidos, margem) | ✅ pronto |
+| Configurações (horários, pausa, checkout, entrega por bairro, encomendas, pagamentos, aparência, mensagens) | ✅ pronto |
+| Loja do cliente (vitrine, sacola, checkout, Pix, cartão, WhatsApp, acompanhamento) | ✅ pronto |
+| Cupons e avaliações | ⏳ próxima etapa |
+| Taxa de entrega por km (precisa de serviço de mapas) | ⏳ próxima etapa |
+| Envio automático de WhatsApp (precisa de API paga) | ⏳ hoje o dono envia com um clique |
 
 ## Como rodar no computador
 
@@ -56,8 +58,15 @@ npm run build      # build de produção
 
 ## Pagamentos
 
-- **Pix:** o cliente paga direto na chave Pix da loja. Cadastre a chave em **Configurações → Pix**.
-- **Crédito e débito:** pelo **Mercado Pago**.
-  - A *public key* vai em **Configurações → Cartão**.
+- **Pix:** o cliente recebe o QR Code "copia e cola" já com o valor do pedido.
+  - O dinheiro cai direto na chave da loja, sem intermediário e sem taxa.
+  - O dono confere no app do banco e clica em **Marcar como pago** no pedido.
+  - Configure a chave em **Configurações → Pagamentos**.
+- **Crédito e débito:** pelo **Mercado Pago (Checkout Pro)**.
+  - O cliente paga numa página do próprio Mercado Pago; o site nunca vê dados de cartão.
+  - A *public key* vai em **Configurações → Pagamentos**.
   - O *access token* vai **só** no `.env` do servidor (`MP_ACCESS_TOKEN`), nunca no painel nem no git.
   - O cartão só aparece para o cliente quando as duas estão configuradas.
+  - A confirmação do pagamento chega sozinha pelo aviso do Mercado Pago. Para isso, o `PUBLIC_API_URL` precisa ser um endereço público; em `localhost` o Mercado Pago não consegue avisar.
+  - Quando o cliente volta do Mercado Pago, a página do pedido também confere o pagamento.
+- **Dinheiro na entrega:** opcional, com campo de troco.

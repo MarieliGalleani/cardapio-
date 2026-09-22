@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
+import { saveImage } from '../lib/uploads.js'
+import { getSettings } from '../services/store.js'
 
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use o formato HH:MM')
 const money = z.coerce.number().nonnegative()
@@ -51,8 +53,6 @@ const settingsBody = z
   })
   .partial()
 
-export const getSettings = () => prisma.storeSettings.upsert({ where: { id: 1 }, create: { id: 1 }, update: {} })
-
 export async function settingsRoutes(app: FastifyInstance) {
   app.get('/', async () => ({
     ...(await getSettings()),
@@ -64,5 +64,16 @@ export async function settingsRoutes(app: FastifyInstance) {
     const data = settingsBody.parse(req.body)
     await getSettings()
     return prisma.storeSettings.update({ where: { id: 1 }, data })
+  })
+
+  // Logo ou capa da loja
+  app.post('/image/:field', async (req) => {
+    const { field } = z.object({ field: z.enum(['logo', 'cover']) }).parse(req.params)
+    const url = await saveImage(req)
+    await getSettings()
+    return prisma.storeSettings.update({
+      where: { id: 1 },
+      data: field === 'logo' ? { logoUrl: url } : { coverUrl: url },
+    })
   })
 }

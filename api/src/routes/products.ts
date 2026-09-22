@@ -1,11 +1,6 @@
 import type { FastifyInstance } from 'fastify'
-import { randomUUID } from 'node:crypto'
-import { createWriteStream } from 'node:fs'
-import { extname, join } from 'node:path'
-import { pipeline } from 'node:stream/promises'
 import { z } from 'zod'
-import { UPLOAD_DIR } from '../lib/uploads.js'
-import { HttpError } from '../lib/http.js'
+import { saveImage } from '../lib/uploads.js'
 import { prisma } from '../lib/prisma.js'
 import { recipeInclude, summarizeRecipe } from '../services/recipes.js'
 
@@ -122,16 +117,7 @@ export async function productRoutes(app: FastifyInstance) {
 
   app.post('/:id/image', async (req) => {
     const { id } = idParam.parse(req.params)
-    const file = await req.file()
-    if (!file) throw new HttpError(400, 'Envie uma imagem')
-    const ext = extname(file.filename).toLowerCase()
-    if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
-      throw new HttpError(400, 'Use uma imagem JPG, PNG ou WEBP')
-    }
-    const name = `${randomUUID()}${ext}`
-    await pipeline(file.file, createWriteStream(join(UPLOAD_DIR, name)))
-    if (file.file.truncated) throw new HttpError(413, 'A imagem pode ter no máximo 5 MB')
-    const base = process.env.PUBLIC_API_URL ?? ''
-    return prisma.product.update({ where: { id }, data: { imageUrl: `${base}/uploads/${name}` } })
+    const imageUrl = await saveImage(req)
+    return prisma.product.update({ where: { id }, data: { imageUrl } })
   })
 }
